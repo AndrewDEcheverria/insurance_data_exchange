@@ -1,5 +1,5 @@
 
-# Mock insurance customer data with invalid data
+# Insurance Customer Data Exchange
 ### Business Scenario
 I have created a scenario where a company receives data from corporate customers with files containing Employees, Dependents, and Benefit Enrollments
 
