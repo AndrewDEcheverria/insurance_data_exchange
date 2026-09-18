@@ -3,7 +3,7 @@
 ### Business Scenario
 I have created a scenario where a company receives data from corporate customers with files containing Employees, Dependents, and Benefit Enrollments
 
-The files contain errors and invalid data, so we will identify each error tailored to the company's requirements so that they may be entered into the downstream insurance administration system. We will follow rules from our company that the data must meet the requirements of the business. As we go we are designing the pipeline as well as the code that we can use repeatedly when the next data set comes in.
+The files contain errors and invalid data, so we will identify each error tailored to the company's requirements so that they may be entered into the downstream insurance administration system. We will follow rules from our company that the data must meet the requirements of the business. As we go, we are designing the pipeline as well as the code that we can use repeatedly when the next data set comes in.
 
 The process will look like this:
 
@@ -22,6 +22,8 @@ Re-validation → Reconciliation → Production load</b>
 9) Each data load must produce an auditable error report
 10) Source and target record counts must be reconciled 
 <img width="858" height="883" alt="insurance_data_exchange_schema (1)" src="https://github.com/user-attachments/assets/e12d5188-167a-4251-a12a-34274ab2ad15" />
+
+(Note: When importing data with these tables, primary keys will not add duplicate rows. We will be using staging tables with no primary keys to make sure data cleaning protocols are working)
 
 
 
