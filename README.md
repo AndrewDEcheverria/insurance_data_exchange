@@ -7,8 +7,8 @@ The files contain errors and invalid data, so we will identify each error tailor
 
 The process will look like this:
 
-<b>Customer files → Intake → Validation → Error log → Correction →
-Re-validation → Reconciliation → Production load</b>
+<b>Customer files -> Intake -> Validation -> Error log -> Correction ->
+Re-validation -> Reconciliation -> Production load</b>
 
 ## Business requirements
 1) Employee ID must be unique and non-null 
