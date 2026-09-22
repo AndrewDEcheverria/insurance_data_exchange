@@ -48,22 +48,3 @@ CREATE TABLE data_quality_errors (
     error_message VARCHAR(255),
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO data_quality_errors (
-    record_id,
-    source_table,
-    field_name,
-    error_type,
-    severity,
-    error_message
-)
-SELECT
-    employee_id,
-    'staging_employees',
-    'employee_id',
-    'Duplicate Employee ID',
-    'High',
-    'Employee ID appears more than once in the incoming file.'
-FROM staging_employees
-GROUP BY employee_id
-HAVING COUNT(*) > 1;
