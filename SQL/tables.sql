@@ -37,3 +37,33 @@ CREATE TABLE enrollments (
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
     FOREIGN KEY (plan_code) REFERENCES benefit_plans(plan_code)
 );
+
+CREATE TABLE data_quality_errors (
+    error_id INT AUTO_INCREMENT PRIMARY KEY,
+    record_id INT,
+    source_table VARCHAR(50),
+    field_name VARCHAR(50),
+    error_type VARCHAR(100),
+    severity VARCHAR(20),
+    error_message VARCHAR(255),
+    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    employee_id,
+    'staging_employees',
+    'employee_id',
+    'Duplicate Employee ID',
+    'High',
+    'Employee ID appears more than once in the incoming file.'
+FROM staging_employees
+GROUP BY employee_id
+HAVING COUNT(*) > 1;
