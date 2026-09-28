@@ -107,3 +107,73 @@ SELECT
     COUNT(*) AS error_count
 FROM data_quality_errors
 GROUP BY error_type, severity;
+
+-- 3: Date and birth must be valid
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    date_of_birth
+FROM staging_employees
+WHERE date_of_birth > CURRENT_DATE;
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    hire_date
+FROM staging_employees
+WHERE hire_date > CURRENT_DATE;
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    date_of_birth,
+    hire_date
+FROM staging_employees
+WHERE hire_date < date_of_birth;
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    hire_date
+FROM staging_employees
+WHERE hire_date > CURRENT_DATE;
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    date_of_birth,
+    hire_date
+FROM staging_employees
+WHERE hire_date < date_of_birth
+AND date_of_birth <= CURRENT_DATE;
+
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    employee_id,
+    'staging_employees',
+    'date_of_birth',
+    'Future Date of Birth',
+    'High',
+    'Date of birth cannot be in the future.'
+FROM staging_employees
+WHERE date_of_birth > CURRENT_DATE;
+
+SELECT
+    error_type,
+    severity,
+    COUNT(*) AS error_count
+FROM data_quality_errors
+GROUP BY error_type, severity;
