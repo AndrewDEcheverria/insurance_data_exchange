@@ -18,7 +18,7 @@ Re-validation -> Reconciliation -> Production load</b>
 5) Dependent records must reference an existing employee 
 6) Benefit plan codes must exist in the approved reference table 
 7) Coverage start date cannot precede employee hire date 
-8) Coverage amount must fall within plan limits | Medium 
+8) Coverage amount must fall within plan limits
 9) Each data load must produce an auditable error report
 10) Source and target record counts must be reconciled 
 <img width="858" height="883" alt="insurance_data_exchange_schema (1)" src="https://github.com/user-attachments/assets/e12d5188-167a-4251-a12a-34274ab2ad15" />
