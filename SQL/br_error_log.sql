@@ -177,3 +177,159 @@ SELECT
     COUNT(*) AS error_count
 FROM data_quality_errors
 GROUP BY error_type, severity;
+
+-- 4: Validate employee status
+
+SELECT
+    employment_status,
+    COUNT(*) AS record_count
+FROM staging_employees
+GROUP BY employment_status
+ORDER BY record_count DESC;
+
+SELECT
+    employee_id,
+    first_name,
+    last_name,
+    employment_status
+FROM staging_employees
+WHERE employment_status IS NOT NULL
+  AND TRIM(employment_status) <> ''
+  AND LOWER(TRIM(employment_status)) NOT IN (
+      'active',
+      'inactive',
+      'terminated'
+  );
+
+SELECT
+    COUNT(*) AS invalid_status_records
+FROM staging_employees
+WHERE employment_status IS NOT NULL
+  AND TRIM(employment_status) <> ''
+  AND LOWER(TRIM(employment_status)) NOT IN (
+      'active',
+      'inactive',
+      'terminated'
+  );
+  
+  -- 5: Dependents must reference existing employee
+SELECT
+    relationship,
+    COUNT(*) AS record_count
+FROM staging_dependents
+GROUP BY relationship
+ORDER BY record_count DESC;
+
+SELECT
+    dependent_id,
+    employee_id,
+    relationship
+FROM staging_dependents
+WHERE relationship IS NULL
+   OR TRIM(relationship) = ''
+   OR LOWER(TRIM(relationship)) NOT IN (
+       'spouse',
+       'child'
+   );
+   
+SELECT
+    d.dependent_id,
+    d.employee_id,
+    d.first_name,
+    d.last_name
+FROM staging_dependents AS d
+LEFT JOIN staging_employees AS e
+    ON d.employee_id = e.employee_id
+WHERE d.employee_id IS NULL
+   OR e.employee_id IS NULL;
+   
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    d.dependent_id,
+    'staging_dependents',
+    'employee_id',
+    'Orphan Dependent',
+    'High',
+    CONCAT(
+        'Dependent references employee ID ',
+        d.employee_id,
+        ', which does not exist in staging_employees.'
+    )
+FROM staging_dependents AS d
+LEFT JOIN staging_employees AS e
+    ON d.employee_id = e.employee_id
+WHERE d.employee_id IS NULL
+   OR e.employee_id IS NULL;
+   
+SELECT
+    error_type,
+    severity,
+    COUNT(*) AS error_count
+FROM data_quality_errors
+GROUP BY error_type, severity
+ORDER BY error_type;
+
+-- 6: Benefit plan codes
+
+SELECT
+    plan_code,
+    COUNT(*) AS record_count
+FROM staging_enrollments
+GROUP BY plan_code
+ORDER BY record_count DESC;
+ 
+SELECT
+    e.enrollment_id,
+    e.employee_id,
+    e.plan_code
+FROM staging_enrollments AS e
+LEFT JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE p.plan_code IS NULL;
+
+SELECT
+    COUNT(*) AS invalid_plan_records
+FROM staging_enrollments AS e
+LEFT JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE p.plan_code IS NULL;
+
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    e.enrollment_id,
+    'staging_enrollments',
+    'plan_code',
+    'Invalid Plan Code',
+    'High',
+    CONCAT(
+        'Plan code ',
+        e.plan_code,
+        ' does not exist in the approved benefit_plans reference table.'
+    )
+FROM staging_enrollments AS e
+LEFT JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE p.plan_code IS NULL;
+
+SELECT
+    error_type,
+    severity,
+    COUNT(*) AS error_count
+FROM data_quality_errors
+GROUP BY error_type, severity
+ORDER BY error_type;
+  
