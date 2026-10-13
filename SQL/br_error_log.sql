@@ -332,4 +332,142 @@ SELECT
 FROM data_quality_errors
 GROUP BY error_type, severity
 ORDER BY error_type;
-  
+
+-- 7: coverage date validation
+
+SELECT
+    e.enrollment_id,
+    e.employee_id,
+    emp.hire_date,
+    e.coverage_start_date
+FROM staging_enrollments AS e
+JOIN staging_employees AS emp
+    ON e.employee_id = emp.employee_id
+WHERE e.coverage_start_date < emp.hire_date;
+
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    e.enrollment_id,
+    'staging_enrollments',
+    'coverage_start_date',
+    'Coverage Before Hire Date',
+    'High',
+    'Coverage start date cannot precede the employee hire date.'
+FROM staging_enrollments AS e
+JOIN staging_employees AS emp
+    ON e.employee_id = emp.employee_id
+WHERE e.coverage_start_date < emp.hire_date;
+
+SELECT
+    error_type,
+    severity,
+    COUNT(*) AS error_count
+FROM data_quality_errors
+GROUP BY error_type, severity
+ORDER BY error_type;
+
+-- 8: Covereage amounts validated
+
+SELECT
+    e.enrollment_id,
+    e.employee_id,
+    e.plan_code,
+    e.coverage_amount,
+    p.min_coverage,
+    p.max_coverage
+FROM staging_enrollments AS e
+JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE e.coverage_amount < p.min_coverage
+   OR e.coverage_amount > p.max_coverage;
+   
+SELECT
+    CASE
+        WHEN e.coverage_amount < p.min_coverage
+            THEN 'Below Minimum'
+        WHEN e.coverage_amount > p.max_coverage
+            THEN 'Above Maximum'
+    END AS violation_type,
+    COUNT(*) AS record_count
+FROM staging_enrollments AS e
+JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE e.coverage_amount < p.min_coverage
+   OR e.coverage_amount > p.max_coverage
+GROUP BY violation_type;
+
+SELECT
+    e.enrollment_id,
+    e.employee_id,
+    e.plan_code,
+    e.coverage_amount,
+    p.min_coverage,
+    p.max_coverage
+FROM staging_enrollments AS e
+JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE e.coverage_amount < p.min_coverage
+   OR e.coverage_amount > p.max_coverage
+LIMIT 10;
+
+INSERT INTO data_quality_errors (
+    record_id,
+    source_table,
+    field_name,
+    error_type,
+    severity,
+    error_message
+)
+SELECT
+    e.enrollment_id,
+    'staging_enrollments',
+    'coverage_amount',
+    CASE
+        WHEN e.coverage_amount < p.min_coverage
+            THEN 'Coverage Below Minimum'
+        WHEN e.coverage_amount > p.max_coverage
+            THEN 'Coverage Above Maximum'
+    END,
+    'Medium',
+    CASE
+        WHEN e.coverage_amount < p.min_coverage
+            THEN CONCAT(
+                'Coverage amount ',
+                e.coverage_amount,
+                ' is below the plan minimum of ',
+                p.min_coverage,
+                '.'
+            )
+        WHEN e.coverage_amount > p.max_coverage
+            THEN CONCAT(
+                'Coverage amount ',
+                e.coverage_amount,
+                ' exceeds the plan maximum of ',
+                p.max_coverage,
+                '.'
+            )
+    END
+FROM staging_enrollments AS e
+JOIN benefit_plans AS p
+    ON e.plan_code = p.plan_code
+WHERE e.coverage_amount < p.min_coverage
+   OR e.coverage_amount > p.max_coverage;
+   
+SELECT
+    error_type,
+    severity,
+    COUNT(*) AS error_count
+FROM data_quality_errors
+WHERE error_type IN (
+    'Coverage Below Minimum',
+    'Coverage Above Maximum'
+)
+GROUP BY error_type, severity
+ORDER BY error_type;
